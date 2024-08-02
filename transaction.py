@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 from datetime import datetime
 from data_entry import get_amount,get_category,get_date,get_desc
+import matplotlib.pyplot as plt
 
 class CSV():
     csv_file="finance_data.csv"
@@ -50,6 +51,7 @@ class CSV():
             print(f"total Expense ${total_expense:.2f}")
             print(f"Net Savings ${(total_income-total_expense):.2f}")
         return df
+    
 
 
 
@@ -61,17 +63,46 @@ def add():
     desc=get_desc()
     CSV.add_entry(date,amount,category,desc)
 
+def plot_transactions(df):
+    df.set_index("date", inplace=True)
+
+    income_df = (
+        df[df["category"] == "Income"]
+        .resample("D")
+        .sum()
+        .reindex(df.index, fill_value=0)
+    )
+    expense_df = (
+        df[df["category"] == "Expense"]
+        .resample("D")
+        .sum()
+        .reindex(df.index, fill_value=0)
+    )
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(income_df.index, income_df["amount"], label="Income", color="g")
+    plt.plot(expense_df.index, expense_df["amount"], label="Expense", color="r")
+    plt.xlabel("Date")
+    plt.ylabel("Amount")
+    plt.title("Income and Expenses Over Time")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 def main():
     while True:
         print("\n1.ADD A TRANSACTION\n2.View Transaction from a date range\n 3.exit \n".upper())
-        ch=int(input("Enter your choice; "))
+        ch=int(input("Enter your choice: "))
         if ch==1:
             add()
         elif ch==2:
-            start_date=get_date("Enter the start date (dd-mm-yyyy)")
-            end_date=get_date("Enter the end date (dd-mm-yyyy)")
+            start_date=get_date("Enter the start date (dd-mm-yyyy): ")
+            end_date=get_date("Enter the end date (dd-mm-yyyy): ")
             df=CSV.get_transaction(start_date,end_date)
+            print(df)
+            if (input("do you want to see the graph (y/n) ").lower()=="y"):
+                plot_transactions(df)
+            
         elif ch==3:
             print("Exiting...")
             exit()
